@@ -15,8 +15,8 @@
     },
     "main": "index.js",
     "scripts": {
-        "build": "vp build --mode hound && vp build --mode excluded_files",
-        "build:dev": "vp build --mode hound --minify false && vp build --mode excluded_files --minify false",
+        "build": "vp build",
+        "build:dev": "vp build --mode development",
         "test": "vp test",
         "format": "vp fmt"
     },

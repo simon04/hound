@@ -3,12 +3,24 @@ import { defineConfig } from "vite-plus";
 // The UI ships two independent, self-contained scripts. In production the Go
 // server inlines each bundle directly into a <script> tag (see ui/ui.go), so
 // every entry must build to a standalone IIFE with no import/export or shared
-// chunks. Rolldown only allows a single input per IIFE output, so `vp build`
-// is invoked once per entry, selecting the entry via --mode.
-const entries: Record<string, string> = {
-    hound: "ui/assets/js/hound.jsx",
-    excluded_files: "ui/assets/js/excluded_files.jsx",
-};
+// chunks. Rolldown only allows a single input per IIFE output, so each entry
+// is its own build environment and `builder.buildApp` builds them in one pass.
+const entries = ["hound", "excluded_files"];
+
+const libEnv = (name: string, minify: boolean) => ({
+    build: {
+        outDir: "ui/.build/ui/js",
+        emptyOutDir: false,
+        target: "es2015",
+        minify,
+        lib: {
+            entry: `ui/assets/js/${name}.jsx`,
+            formats: ["iife" as const],
+            name: "Hound",
+            fileName: () => `${name}.js`,
+        },
+    },
+});
 
 export default defineConfig(({ mode }) => ({
     test: {
@@ -28,22 +40,21 @@ export default defineConfig(({ mode }) => ({
     },
     // JSX targets the global `React` (loaded separately via react-*.min.js),
     // using the classic runtime so no `react` import is injected.
-    esbuild: {
-        jsx: "transform",
-        jsxFactory: "React.createElement",
-        jsxFragment: "React.Fragment",
+    oxc: {
+        jsx: {
+            runtime: "classic",
+            pragma: "React.createElement",
+            pragmaFrag: "React.Fragment",
+        },
     },
-    build: entries[mode]
-        ? {
-              outDir: "ui/.build/ui/js",
-              emptyOutDir: false,
-              target: "es2015",
-              lib: {
-                  entry: entries[mode],
-                  formats: ["iife"],
-                  name: "Hound",
-                  fileName: () => `${mode}.js`,
-              },
-          }
-        : undefined,
+    environments: Object.fromEntries(
+        entries.map((name) => [name, libEnv(name, mode !== "development")]),
+    ),
+    builder: {
+        async buildApp(builder) {
+            for (const name of entries) {
+                await builder.build(builder.environments[name]);
+            }
+        },
+    },
 }));

@@ -16,6 +16,7 @@
     "main": "index.js",
     "scripts": {
         "build": "webpack --mode production",
+        "build:dev": "webpack --mode development",
         "test": "vp test",
         "format": "vp fmt"
     },

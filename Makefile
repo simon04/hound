@@ -3,6 +3,11 @@ CMDS := .build/bin/houndd .build/bin/hound
 SRCS := $(shell find . -type f -name '*.go')
 UI := $(shell find ui/assets -type f)
 
+BUILD := build
+ifdef DEBUG
+	BUILD := build:dev
+endif
+
 ALL: $(CMDS)
 
 ui: ui/.build/ui
@@ -22,7 +27,7 @@ node_modules/build:
 ui/.build/ui: node_modules/build $(UI)
 	mkdir -p ui/.build/ui
 	cp -r ui/assets/* ui/.build/ui
-	npm run build
+	npm run $(BUILD)
 
 dev: node_modules/build
 

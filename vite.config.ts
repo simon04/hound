@@ -48,8 +48,11 @@ export default defineConfig(({ mode }) => ({
   ),
   builder: {
     async buildApp(builder) {
-      for (const name of ["hound", "excluded_files"]) {
-        await builder.build(builder.environments[name]);
+      for (const [name, environment] of Object.entries(builder.environments)) {
+        // Skip Vite's implicit default `client` environment; only our
+        // explicitly-defined lib environments have an entry to build.
+        if (name === "client") continue;
+        await builder.build(environment);
       }
     },
   },
